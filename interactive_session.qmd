@@ -1,0 +1,125 @@
+---
+title: "Day 9 Session"
+format: html
+editor: visual
+execute:
+  warning: FALSE
+---
+
+## Session 2
+
+```{r}
+library(kableExtra)
+library(patchwork)
+library(tidyverse)
+library(palmerpenguins)
+library(reprex)
+```
+
+### Warm up
+
+Starting from penguins create a new subset in which u only keep columns (species, island, sex, body mass, flipper length
+
+filter to only include chinstrap and gentoo
+
+rename the species column to "penguin_species"
+
+Create a summary table that contains the mean of body mass, the mean flipper length, and the total count of observations each by specific spsecies
+
+```{r}
+penguin_col <- penguins %>% 
+  select(c("species","island", "sex", "flipper_length_mm", "body_mass_g", ))
+
+penguin_spec <- penguins %>% 
+  filter(species %in% c("Chinstrap", "Gentoo")) %>% 
+  rename(penguin_species = species) %>% 
+  group_by(penguin_species,sex) %>% 
+  summarize(mean_mass = mean(body_mass_g, na.rm = TRUE),
+            mean_length = mean(flipper_length_mm, na.rm = TRUE),
+            sample_size = n())
+
+penguin_summm <- penguins %>% 
+group_by(species,sex) %>% 
+summarize(mean_body_mass = mean(body_mass_g, na.rm = TRUE),
+mean_flipper_length = mean(flipper_length_mm, na.rm = TRUE),
+            sample_size = n())
+
+
+```
+
+## Across from dplyr
+
+Create a summary table of mean values for all numberic tables in he penguins data set
+
+```{r}
+penguins %>% 
+  group_by(species) %>% 
+  summarize(across(where(is.numeric), mean, na.rm = TRUE))
+```
+
+Calculate the mean value of all columns hat start with bill
+
+```{r}
+penguins %>% 
+  group_by(species, island) %>% 
+  summarize(across(starts_with("bill"), mean, na.rm = TRUE))
+```
+
+write code that will return the min value pf any columns that end with mm grouped by island and year
+
+```{r}
+penguins %>% 
+  group_by(island,year) %>% 
+  summarize(across(ends_with("mm"), min, na.rm = TRUE))
+```
+
+Find and return both the mean and sd of all columns starting with bill grouped by penguin species and returning a new name that combines the original column with the function
+
+```{r}
+penguins %>% 
+  group_by(species) %>% 
+  summarize(across(where(is.numeric),
+                   list(mean = mean, stddev = sd), 
+                   na.rm = TRUE, 
+                   .names = "{.fn}_{.col}"))
+```
+
+```{r}
+penguins %>% 
+  group_by(species) %>% 
+  summarize(across(starts_with("bill"),list(mean = mean, std_dev = sd), na.rm = TRUE, .names = "{.col}_{.fn}"))
+```
+
+```{r}
+penguins_table <- penguins %>% 
+  group_by(species, sex) %>% 
+  summarize(mean_mass = mean(body_mass_g, na.rm = TRUE),
+            sd_mass = sd(body_mass_g, na.rm  = TRUE)) %>% 
+  kable(col.names = c("Species", "Sex", "Mean Body Mass (g)", "Standard Deviation of Body Mass (g)"))
+
+penguins_table
+```
+
+```{r}
+chart1 <- penguins %>% 
+  ggplot(aes(x = body_mass_g, y = flipper_length_mm))+
+  geom_point()
+```
+
+```{r}
+chart2 <- penguins %>% 
+  ggplot(aes(x = bill_length_mm))+
+  geom_histogram()
+
+```
+
+```{r}
+(chart1+chart2)/chart2
+```
+
+```{r}
+#| fig-cap: Penguin body mass observatios by species
+#| fig-alt: Jitterplot showing body mass measurements for three penguin species obsereved near palmer insert trands here
+ggplot(penguins, aes(x = species, y = body_mass_g))+
+  geom_jitter(width = 0.2, alpha = 0.5, color = "blue")
+```
